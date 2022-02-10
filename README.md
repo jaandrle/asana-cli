@@ -1,5 +1,5 @@
 # asana-cli
-For now early version of application providing some actions from your terminal in “user friendly” way.
+For now, early version of application providing some actions from your terminal in “user friendly” way.
 
 ## Screenshots
 ![marks_cf.png](./screenshots/marks_cf.png)
