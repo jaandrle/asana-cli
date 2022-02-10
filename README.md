@@ -1,6 +1,18 @@
 # asana-cli
 For now, early version of application providing some actions from your terminal in “user friendly” way.
 
+## Quick start
+1. Install [nodejs](https://nodejs.org/en/download/) >= v16.13:
+    ```bash
+    curl -sL install-node.vercel.app/lts | bash
+    ```
+    …you can also use [nvm-sh/nvm: Node Version Manager](https://github.com/nvm-sh/nvm).
+2. Download `asana.mjs` and make executable (or for run use `node asana.mjs` – Windows)
+3. Run and folows instructions in: `asana.mjs auth`
+4. Checks `asana.mjs list tags`, `asana.mjs list custom_fields`, and one of the `asana.mjs list tasks-*`
+5. Run `asana.mjs marks *` (\* name defined in step 4)
+6. if you not sure append `--help` for help (`marks` and not all `list tasks-*` are not 100% covered)
+
 ## Screenshots
 ![marks_cf.png](./screenshots/marks_cf.png)
 ![marks_section.png](./screenshots/marks_section.png)
