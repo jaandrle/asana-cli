@@ -341,7 +341,7 @@ async function pinSections_(){
     }
     async function shell_(list_cf){
         const rl= createInterface();
-        const pinned= Object.keys(configRead().abbrevS).filter(name=> name[0]==="S").map(name=> name.slice(1));
+        const pinned= Object.keys(configRead().abbrevS);
         spinEnd();
         print();
         while(true){
