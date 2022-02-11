@@ -9,9 +9,9 @@ For now, early version of application providing some actions from your terminal 
     …you can also use [nvm-sh/nvm: Node Version Manager](https://github.com/nvm-sh/nvm).
 2. Download `asana.mjs` and make executable (or for run use `node asana.mjs` – Windows)
 3. Run and folows instructions in: `asana.mjs auth`
-4. Checks `asana.mjs list tags`, `asana.mjs list custom_fields`, and one of the `asana.mjs list tasks-*`
+4. Checks `asana.mjs list tags`, `asana.mjs list sections`, `asana.mjs list custom_fields`, and one of the `asana.mjs list tasks-*`
 5. Run `asana.mjs marks *` (\* name defined in step 4)
-6. if you not sure append `--help` for help (`marks` and not all `list tasks-*` are not 100% covered)
+6. if you not sure append `--help` for help
 
 ## Screenshots
 ![marks_cf.png](./screenshots/marks_cf.png)
@@ -25,11 +25,13 @@ For now, early version of application providing some actions from your terminal 
 
 ## Synopsis
 ```terminal
-    asana.mjs@v2022-02-10: Utility to manage some actions with Asana tasks from command line.
+    asana.mjs@v2022-02-11: Utility to manage some actions with Asana tasks from command line.
     
     USAGE
-        asana.mjs list|marks [subcommands|mark_name] [--help]
-        asana.mjs [ api … | alias [add|remove|list] [alias_name] [alias_value] ] [--help]
+        asana.mjs list [subcommands] [--help]
+        asana.mjs marks [mark_name] [--help]
+        asana.mjs api … [--help]
+        asana.mjs alias [add|remove|list] [alias_name] [alias_value] [--help]
         asana.mjs [--help|--version|--config-path]
         asana.mjs auth [--help]
         asana.mjs completion_bash [--help|--complete]
@@ -41,7 +43,7 @@ For now, early version of application providing some actions from your terminal 
 
         So, working with this cli is splitted into three phases:
         1. You choose (pin) your typical projects (section), tags and custom fields via:
-            `asana.mjs list [tags|custom_fields] …`
+            `asana.mjs list [tags|custom_fields|sections] …`
         2. You choose (marked) tasks you want to work with (e. g. 'project1_urgent', 'project2_release2', …) via:
             `asana.mjs list [tasks-todos|tasks-favorites|tasks-all] …`
         3. Finally, you manage your tasks via:
@@ -59,5 +61,4 @@ For now, early version of application providing some actions from your terminal 
     
     COMMANDS COMPLETITION IN BASH
         see `asana.mjs completion_bash --help`
-
 ```

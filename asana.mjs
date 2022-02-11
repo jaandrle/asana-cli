@@ -6,7 +6,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import readline from "readline";
 import { execFileSync } from "child_process";
 
-const version= "2022-02-10";
+const version= "2022-02-11";
 const alias_join= "<%space%>";
 const { script_name, path, Authorization, argvs }= scriptsInputs();
 const { isTTY }= process.stdout;
@@ -139,20 +139,24 @@ function alias(){
     if(argvs.some(n=> n==="--help"))
         return console.log([ //#region help
             "Manage aliases for "+script_name,
-            "\nUSAGE",
+            "",
+            "USAGE",
             script_name+" list",
             script_name+" add _name …",
             script_name+" remove _name",
-            "\nHELP",
+            "",
+            "HELP",
             "  -   'list': pritns available aliases",
             "  -    'add': register new alias with name '_name' and value is",
             "              combinations of cli’s subcommands (e. g. 'alias list',",
             "              'list tags', …)",
             "  - 'remove': unregister alias with name '_name'",
-            "\nUSE ALIAS",
+            "",
+            "USE ALIAS",
             "  All registered aliases are available as main command:",
             `    ${script_name} _example`,
-            "\nEXAMPLES",
+            "",
+            "EXAMPLES",
             `   ${script_name} api custom_fields/798840962403818?opt_fields=name,enum_options.name`,
             `   ${script_name} alias add _cf_rogress api custom_fields/798840962403818?opt_fields=name,enum_options.name`,
             `   ${script_name} _cf_rogress`,
@@ -161,12 +165,13 @@ function alias(){
             `   ${script_name} alias add _todo_last_modified list tasks-todos 0 0 list`,
             `   ${script_name} _todo_last_modified`,
             `   ${script_name} alias remove _todo_last_modified`,
-            "\nPLANNED",
+            "",
+            "PLANNED",
             "  In future, there will be probably option to use placeholder (? '::1::', '::2::', …).",
             "  So, previous example could be more general, such as:",
             `    ${script_name} alias add _todo_last_modified list tasks-todos 0 ::1:: list`,
             `    ${script_name} _todo_last_modified 0`,
-        ].join("\n")); //#endregion help
+        ].map(l=> "    "+l).join("\n")); //#endregion help
 
     const prefix= "_";
     const cmd= argvs.shift() ?? "list";
@@ -204,16 +209,20 @@ async function api_(){
     if(argvs.some(n=> n==="--help"))
         return console.log([ //#region help
             "Make Asana REST API easily (auto autorization, …) just via "+script_name,
-            "\nUSAGE",
+            "",
+            "USAGE",
             `  ${script_name} api REST_API`,
-            "\nHELP",
+            "",
+            "HELP",
             "  For REST_API options see: https://developers.asana.com/docs/asana.",
             "  For now only GET options are available.",
-            "\nEXAMPLE",
+            "",
+            "EXAMPLE",
             `  ${script_name} api custom_fields/798840962403818?opt_fields=name,enum_options.name`,
-            "\nPLANNED",
+            "",
+            "PLANNED",
             "  In future, there will be probably option '--method' (POST, PUT, …, GET as default) and '--send-json'."
-        ].join("\n")); //#endregion help
+        ].map(l=> "    "+l).join("\n")); //#endregion help
     
     const request= argvs.shift() ?? "--help";
     const out= await get_(request);
@@ -226,19 +235,22 @@ async function pinTags_(){
     if(argvs.some(n=> n==="--help"))
         return console.log([ //#region help
             "Interactive interface to pin tags to be able to work with marked tasks.",
-            "\nUSAGE",
+            "",
+            "USAGE",
             `  ${script_name} list tags`,
             `  ${script_name} list tags list`,
             `  ${script_name} list tags [list] --help`,
-            "\nBASIC (interactive interface)",
+            "",
+            "BASIC (interactive interface)",
             "  You see list in form 'number: tag_name' (or '*number: tag_name') separated by ','. And section '*** Commands **'",
             "  with options [q]uit, [f]ilter, [t]oggle pin (*). Below, there is promnt 'What now',",
             "  so you can enter q/f/t to choose operation. In next step you can filter list by (partialy) entered text,",
             "  or mark by "+help_choose,
             "  The 'q' interrups interactive mode (also you can use CTRL+C).",
-            "\nLIST",
+            "",
+            "LIST",
             "  Prints tags list in form 'gid\\tname' separated by new lines."
-        ].join("\n")); //#endregion help
+        ].map(l=> "    "+l).join("\n")); //#endregion help
     const spinEnd= spiner();
     const tags= await get_("tags", { qs: { opt_fields: [ "followers", "name" ] } });
     const cmd= argvs.shift() ?? "shell";
@@ -300,18 +312,21 @@ async function pinSections_(){
             "'NUM\\tNAME\\tGID'. Number in NUM column use as 'num_workspace' (typically you want 0).",
             "",
             `There are currently only ${f("favorites project", "yellow")} included (see https://asana.com/guide/help/fundamentals/homepage#gl-favorites)!`,
-            "\nUSAGE",
+            "",
+            "USAGE",
             `  ${script_name} list sections [--help]`,
             `  ${script_name} list sections num_workspace [json] [--help]`,
-            "\nBASIC (interactive interface)",
+            "",
+            "BASIC (interactive interface)",
             "  You see list in form 'number: tag_name' (or '*number: tag_name') separated by ','. And section '*** Commands **'",
             "  with options [q]uit, [f]ilter, [t]oggle pin (*). Below, there is promnt 'What now',",
             "  so you can enter q/f/t to choose operation. In next step you can filter list by (partialy) entered text,",
             "  or mark by "+help_choose,
             "  The 'q' interrups interactive mode (also you can use CTRL+C).",
-            "\nJSON",
+            "",
+            "JSON",
             "  Prints all sections list as json."
-        ].join("\n")); //#endregion help
+        ].map(l=> "    "+l).join("\n")); //#endregion help
     const num_workspace= argvs.shift() ?? "list";
     exitHelp(num_workspace);
     const list_workspaces= await user_().then(({ workspaces })=> workspaces);
@@ -393,18 +408,21 @@ async function pinCustomFields_(){
             "Custom fileds are grouped by workspaces. So with calling without any other arguments",
             "you see list of workspaces in form 'NUM\\tNAME\\tGID'. Number in NUM column use as ",
             "'num_workspace' (typically you want 0).",
-            "\nUSAGE",
+            "",
+            "USAGE",
             `  ${script_name} list custom_fields [--help]`,
             `  ${script_name} list custom_fields num_workspace [json] [--help]`,
-            "\nBASIC (interactive interface)",
+            "",
+            "BASIC (interactive interface)",
             "  You see list in form 'number: tag_name' (or '*number: tag_name') separated by ','. And section '*** Commands **'",
             "  with options [q]uit, [f]ilter, [t]oggle pin (*). Below, there is promnt 'What now',",
             "  so you can enter q/f/t to choose operation. In next step you can filter list by (partialy) entered text,",
             "  or mark by "+help_choose,
             "  The 'q' interrups interactive mode (also you can use CTRL+C).",
-            "\nJSON",
+            "",
+            "JSON",
             "  Prints all custom_fields list as json."
-        ].join("\n")); //#endregion help
+        ].map(l=> "    "+l).join("\n")); //#endregion help
     const spinEnd= spiner();
     const num_workspace= argvs.shift() ?? "list";
     const list_workspaces= await user_().then(({ workspaces })=> workspaces);
@@ -471,22 +489,26 @@ function todo_(){
         return console.log([ //#region help
             "Interactive interface to mark task(s) – this view corresponds to My Tasks (https://asana.com/guide/help/fundamentals/my-tasks).",
             "Tasks are grouped per section and project. They are oredered by last modification (so by '0 0' you find last modified task(s)).",
-            "\nUSAGE",
+            "",
+            "USAGE",
             `  ${script_name} list tasks-todos [--help]`,
             `  ${script_name} list tasks-todos num_project num_section [json|list] [--help]`,
             `  ${script_name} list tasks-todos 0 0`,
-            "\nBASIC (interactive interface)",
+            "",
+            "BASIC (interactive interface)",
             "  You will be asked to fill mark name and description.",
             "  Then you see list in form 'NUM\\tGID\\tSUBTASKS\\tUPDATED\\tNAME' and section '*** Commands **'",
             "  with options [q]uit, …. Below, there is promnt 'What now',",
             "  so you can enter q/… to choose operation. In next step you can be asked to",
             "  choose tasks ("+help_choose+")",
             "  The 'q' interrups interactive mode (also you can use CTRL+C).",
-            "\nLIST",
+            "",
+            "LIST",
             "  Prints tasks in form 'NUM\\tGID\\tSUBTASKS\\tUPDATED\\tNAME'.",
-            "\nJSON",
+            "",
+            "JSON",
             "  Prints all sections list as json."
-        ].join("\n")); //#endregion help
+        ].map(l=> "    "+l).join("\n")); //#endregion help
     const spinEnd= spiner();
     return user_()
     .then(function({ gid: assignee, workspaces: [ { gid: workspace } ] }){
@@ -521,13 +543,7 @@ function todo_(){
         const data_section= list_sections[num_section][1];
         
         const num_task= argvs.shift() ?? "mark";
-        if("json"===num_task){
-            spinEnd();
-            return console.log(isTTY ? data_section.list : JSON.stringify(data_section.list));
-        }
         const list_tasks= Object.entries(data_section.list);
-        if("list"===num_task)
-            return printList(data_project.name+" → "+data_section.name, list_tasks);
         return await tasks_(list_tasks, num_task, data_project, data_section, spinEnd);
         
         function printList(title, list){
@@ -545,30 +561,57 @@ function todo_(){
 }
 async function list_(is_favorites){
     // #region …
+    if(argvs.some(n=> n==="--help")){
+        const cmd= "tasks-"+(is_favorites ? "favorites" : "all");
+        return console.log([ //#region help
+            "Interactive interface to mark task(s) – this view corresponds to ",
+            is_favorites ?
+                "your favorited (https://asana.com/guide/help/fundamentals/homepage#gl-favorites)" :
+                "all tasks in workspace",
+            "Tasks are grouped per section, project and workspaces.",
+            "",
+            "USAGE",
+            `  ${script_name} list ${cmd} [--help]`,
+            `  ${script_name} list ${cmd} num_workspace num_project num_section [--help]`,
+            `  ${script_name} list ${cmd} num_workspace num_project num_section [json|list|mark] [--help]`,
+            `  ${script_name} list ${cmd} 0 0 0`,
+            "",
+            "BASIC (interactive interface)",
+            "  The second usage example (or 3rd with 'mark' option).",
+            "  You will be asked to fill mark name and description.",
+            "  Then you see list in form 'NUM\\tGID\\tSUBTASKS\\tUPDATED\\tNAME' and section '*** Commands **'",
+            "  with options [q]uit, …. Below, there is promnt 'What now',",
+            "  so you can enter q/… to choose operation. In next step you can be asked to",
+            "  choose tasks ("+help_choose+")",
+            "  The 'q' interrups interactive mode (also you can use CTRL+C).",
+            "",
+            "LIST",
+            "  Prints tasks in form 'NUM\\tGID\\tSUBTASKS\\tUPDATED\\tNAME'.",
+            "",
+            "JSON",
+            "  Prints all sections list as json."
+        ].map(l=> "    "+l).join("\n")); //#endregion help
+    }
     const spinEnd= spiner();
     const num_workspace= argvs.shift() ?? "list";
-    exitHelp(num_workspace);
     const list_workspaces= await user_().then(({ workspaces })=> workspaces);
     if("list"===num_workspace)
         return printList("Workspaces", list_workspaces);
     const data_workspace= list_workspaces[num_workspace];
 
     const num_project= argvs.shift() ?? "list";
-    exitHelp(num_project);
     const list_projects= await get_(is_favorites ? `users/me/favorites?workspace=${data_workspace.gid}&resource_type=project` : `workspaces/${data_workspace.gid}/projects`);
     if("list"===num_project)
         return printList(`Projects in '${data_workspace.name}'`, list_projects);
     const data_project= list_projects[num_project];
 
     const num_section= argvs.shift() ?? "list";
-    exitHelp(num_section);
     const list_sections= await get_(`projects/${data_project.gid}/sections`);
     if("list"===num_section)
         return printList(`Sections in '${data_workspace.name}' → '${data_project.name}'`, list_sections);
     const data_section= list_sections[num_section];
 
     const num_task= argvs.shift() ?? "mark";
-    exitHelp(num_task);
     const list_tasks= Object.entries(await get_(`sections/${data_section.gid}/tasks`, { cache: "no-cache", qs: { opt_fields: opt_fields_tasks } }));
     return await tasks_(list_tasks, num_task, data_project, data_section, spinEnd);
 
@@ -578,16 +621,31 @@ async function list_(is_favorites){
             console.log(`${title}\nNUM\tNAME\tGID`);
         console.log(list.map(({ name, gid }, num)=> `${num}\t${name}\t${gid}`).join("\n"));
     }
-    function exitHelp(num){
-        if("--help"!==num) return false;
-        spinEnd();
-        console.log("HELP");
-        process.exit(0);
-    }
     // #endregion …
 }
 async function marks_(){
     //#region …
+    if(argvs.some(n=> n==="--help"))
+        return console.log([ //#region help
+            "Interactive interface to work with marked tasks.",
+            "",
+            "USAGE",
+            `  ${script_name} marks mark_name [--help]`,
+            "",
+            "BASIC (interactive interface)",
+            "  You will be asked to fill mark name and description.",
+            "  Then you see list in form 'NUM\\tGID\\tSUBTASKS\\tUPDATED\\tNAME' and section '*** Commands **'",
+            "  with options [q]uit, …. Below, there is promnt 'What now',",
+            "  so you can enter q/… to choose operation. In next step you can be asked to",
+            "  choose tasks ("+help_choose+")",
+            "  The 'q' interrups interactive mode (also you can use CTRL+C).",
+            "",
+            "LIST",
+            "  Prints tasks in form 'NUM\\tGID\\tSUBTASKS\\tUPDATED\\tNAME'.",
+            "",
+            "JSON",
+            "  Prints all sections list as json."
+        ].map(l=> "    "+l).join("\n")); //#endregion help
     const data_marks= configRead().marks;
     const mark= argvs.shift() ?? "list";
     if("list"===mark){
@@ -597,6 +655,11 @@ async function marks_(){
         return 0;
     }
     let list_tasks= await getTasks_();
+    const data_only= argvs.shift() ?? "";
+    if("json"===data_only)
+        return console.log(isTTY ? list_tasks : JSON.stringify(list_tasks));
+    if("list"===data_only)
+        return print(list_tasks);
     await shell_(Object.keys(list_tasks), num_task=> taskView_(list_tasks[num_task]));
 
     function getTasks_(){ return Promise.all(data_marks[mark].tasks.map(gid=> get_(`tasks/${gid}`, { cache: "no-cache", gs: { opt_fields: opt_fields_tasks } }))); }
@@ -688,13 +751,15 @@ async function marks_(){
 async function tasks_(list_tasks, num_task, data_project, data_section, spinEnd){
     //#region …
     spinEnd();
+    if("json"===num_task)
+        return console.log(isTTY ? list_tasks.map(v=> v[1]) : JSON.stringify(list_tasks.map(v=> v[1])));
+    if("list"===num_task)
+        return print();
     if("mark"===num_task&&isTTY)
         return await shell_(list_tasks.map(([num])=> num), num_task=> taskView_(list_tasks[num_task][1]));
-    if("list"===num_task){
-        print();
-        return 0;
-    }
-    await taskView_(list_tasks[num_task][1]);
+    
+    console.error(`Last argument can be json/list/mark (default) not '${num_task}'`);
+    return 1;
 
     function print(marked= new Set()){
         if(isTTY){
@@ -702,7 +767,7 @@ async function tasks_(list_tasks, num_task, data_project, data_section, spinEnd)
             console.log(`NUM\t${"GID".padEnd(list_tasks[list_tasks.length - 1][1].gid.length)}\tSUBTASKS\tUPDATED\t\tNAME`);
         }
         const pad_subtasks= "subtasks".length;
-        console.log(list_tasks
+        return console.log(list_tasks
             .map(([ num, { gid, modified_at, num_subtasks, name } ])=>
                 `${marked.has(gid)?"*":""}${num}\t${gid}\t${String(num_subtasks).padEnd(pad_subtasks)}\t${modified_at.split('T')[0]}\t${name}`
             ).join("\n"));
@@ -1029,8 +1094,10 @@ function helpMain(){
     ${n}@v${v}: Utility to manage some actions with Asana tasks from command line.
     
     USAGE
-        ${n} ${f("list|marks", "blue")} ${f("[subcommands|mark_name]", "cyan")} [--help]
-        ${n} [ api … | alias [add|remove|list] [alias_name] [alias_value] ] [--help]
+        ${n} ${f("list", "blue")} ${f("[subcommands]", "cyan")} [--help]
+        ${n} ${f("marks", "blue")} ${f("[mark_name]", "cyan")} [--help]
+        ${n} ${f("api …", "blue")} [--help]
+        ${n} ${f("alias [add|remove|list] [alias_name] [alias_value]", "blue")} [--help]
         ${n} [--help|--version|--config-path]
         ${n} auth [--help]
         ${n} completion_bash [--help|--complete]
@@ -1042,7 +1109,7 @@ function helpMain(){
 
         So, working with this cli is splitted into three phases:
         1. You choose (pin) your typical projects (section), tags and custom fields via:
-            \`${n} ${f("list", "blue")} ${f("[tags|custom_fields]", "cyan")} ${f("…", "red")}\`
+            \`${n} ${f("list", "blue")} ${f("[tags|custom_fields|sections]", "cyan")} ${f("…", "red")}\`
         2. You choose (marked) tasks you want to work with (e. g. 'project1_urgent', 'project2_release2', …) via:
             \`${n} ${f("list", "blue")} ${f("[tasks-todos|tasks-favorites|tasks-all]", "cyan")} ${f("…", "red")}\`
         3. Finally, you manage your tasks via:
