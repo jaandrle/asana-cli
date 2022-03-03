@@ -6,7 +6,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import readline from "readline";
 import { execFileSync } from "child_process";
 
-const version= "2022-02-11";
+const version= "2022-03-03";
 const alias_join= "<%space%>";
 const { script_name, path, Authorization, argvs }= scriptsInputs();
 const { isTTY }= process.stdout;
