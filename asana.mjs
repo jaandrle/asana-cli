@@ -26,7 +26,7 @@ const help_choose= "using numbers separated by space (0 1) or range (0-3) or all
     if("abbreviate"===cmd) return abbreviate(argvs);
     if("api"===cmd) return api_();
 
-    if("marks"===cmd) return marks_();
+    if("marks"===cmd) return marks_(argvs);
     
     if("list"!==cmd) return Promise.reject(`Unknown command '${cmd}'`);
     const type= argvs.shift() ?? "tasks-todos";
@@ -623,9 +623,11 @@ async function list_(is_favorites){
     }
     // #endregion …
 }
-async function marks_(){
+async function marks_(argvs_local){
     //#region …
-    if(argvs.some(n=> n==="--help"))
+    const spinEnd= spiner();
+    argvs_local= [...argvs_local];
+    if(argvs_local.some(n=> n==="--help"))
         return console.log([ //#region help
             "Interactive interface to work with marked tasks.",
             "",
@@ -647,32 +649,34 @@ async function marks_(){
             "  Prints all sections list as json."
         ].map(l=> "    "+l).join("\n")); //#endregion help
     const data_marks= configRead().marks;
-    const mark= argvs.shift() ?? "list";
+    const mark= argvs_local.shift() ?? "list";
     if("list"===mark){
+        spinEnd();
         if(isTTY)
             console.log("NAME\tDESCRIPTION\tDATE");
         Object.entries(data_marks).forEach(([ name, { description= "—", date= "—" } ])=> console.log(`${name}\t${description}\t${date}`));
         return 0;
     }
-    let list_tasks= await getTasks_();
-    const data_only= argvs.shift() ?? "";
+    let list_tasks= await Promise.all(data_marks[mark].tasks.map(gid=> get_(`tasks/${gid}`, { cache: "no-cache", gs: { opt_fields: opt_fields_tasks } })));
+    spinEnd();
+    const data_only= argvs_local.shift() ?? "";
     if("json"===data_only)
         return console.log(isTTY ? list_tasks : JSON.stringify(list_tasks));
     if("list"===data_only)
         return print(list_tasks);
     await shell_(Object.keys(list_tasks), num_task=> taskView_(list_tasks[num_task]));
 
-    function getTasks_(){ return Promise.all(data_marks[mark].tasks.map(gid=> get_(`tasks/${gid}`, { cache: "no-cache", gs: { opt_fields: opt_fields_tasks } }))); }
     async function shell_(options, task_){
         const rl= createInterface();
         const open_= getOpen();
         while(true){
             print(list_tasks);
-            const cmd= await questionCmd_(rl, [ "[q]uit", "[v]iev", "[w]eb", "[c]ustom [f]ields", "[t]ag toggle", "[s]ection (project)" ]);
+            const cmd= await questionCmd_(rl, [ "[q]uit", "[r]eload", "[v]iev", "[w]eb", "[c]ustom [f]ields", "[t]ag toggle", "[s]ection (project)" ]);
             if(!cmd) continue;
             try{
                 switch(cmd){
                     case "q": rl.close(); return 0;
+                    case "r": rl.close(); return marks_(argvs);
                     case "v": await Promise.all((await questionChoose_(rl, options)).map(task_)); continue;
                     case "cf": await updateCF_(await questionChoose_(rl, options), rl); continue;
                     case "t": await updateTag_(await questionChoose_(rl, options), rl); continue;
@@ -687,6 +691,7 @@ async function marks_(){
         function openTaskWeb_(tasks){ return Promise.all(tasks.map(n=> open_(list_tasks[n].permalink_url+"/f"))); }
     }
     async function updateSection_(tasks, rl){
+        //#region …
         const abbrevS= configRead().abbrevS;
         const abbrevS_keys= Object.keys(abbrevS);
         console.log("sections: \n  "+abbrevS_keys.map((v,n)=> n+": "+v).join("\n  "));
@@ -702,8 +707,10 @@ async function marks_(){
             .then(()=> get_(`tasks/${data_task.gid}`, { qs: { opt_fields: opt_fields_tasks_mem } }))
             .then(m=> list_tasks[num].memberships= m.memberships);
         })).catch(console.error);
+        //#endregion …
     }
     async function updateTag_(tasks, rl){
+        //#region …
         const abbrevT= configRead().abbrevT;
         const abbrevT_keys= Object.keys(abbrevT);
         console.log("tags: \n  "+abbrevT_keys.map((v,n)=> n+": "+v).join("\n  "));
@@ -719,8 +726,10 @@ async function marks_(){
             .then(()=> get_(`tasks/${data_task.gid}/tags`, { qs: { opt_fields: [ "name", "gid" ] } }))
             .then(tags=> list_tasks[num].tags= tags);
         })).catch(console.error);
+        //#endregion …
     }
     async function updateCF_(tasks, rl){
+        //#region …
         const abbrevC= configRead().abbrevC;
         const abbrevC_keys= Object.keys(abbrevC);
         console.log("custom_fields abbreviates: \n  "+abbrevC_keys.map((v,n)=> n+": "+v).join("\n  "));
@@ -735,8 +744,10 @@ async function marks_(){
             return putPost_("tasks/"+data_task.gid, { qs: { data: { custom_fields: JSON.parse(json_data), opt_fields: opt_fields_tasks } } })
             .then(task=> list_tasks[num]= task);
         })).catch(console.error);
+        //#endregion …
     }
     function print(list_tasks){
+        //#region …
         if(isTTY){
             console.log(`NUM\t${"GID".padEnd(list_tasks[list_tasks.length - 1].gid.length)}\tSUBTASKS\tUPDATED\t\tNAME`);
         }
@@ -745,6 +756,7 @@ async function marks_(){
             .map(({ gid, modified_at, num_subtasks= 0, name }, num)=>
                 `${num}\t${gid}\t${String(num_subtasks).padEnd(pad_subtasks)}\t${modified_at.split('T')[0]}\t${name}`
             ).join("\n"));
+        //#endregion …
     }
     //#endregion …
 }
@@ -762,6 +774,7 @@ async function tasks_(list_tasks, num_task, data_project, data_section, spinEnd)
     return 1;
 
     function print(marked= new Set()){
+        //#region …
         if(isTTY){
             console.log(`Task todo in '${data_project.name}' → '${data_section.name}'`);
             console.log(`NUM\t${"GID".padEnd(list_tasks[list_tasks.length - 1][1].gid.length)}\tSUBTASKS\tUPDATED\t\tNAME`);
@@ -771,6 +784,7 @@ async function tasks_(list_tasks, num_task, data_project, data_section, spinEnd)
             .map(([ num, { gid, modified_at, num_subtasks, name } ])=>
                 `${marked.has(gid)?"*":""}${num}\t${gid}\t${String(num_subtasks).padEnd(pad_subtasks)}\t${modified_at.split('T')[0]}\t${name}`
             ).join("\n"));
+        //#endregion …
     }
     async function shell_(options, task_){
         const rl= createInterface();
