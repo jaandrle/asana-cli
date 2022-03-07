@@ -666,17 +666,63 @@ async function marks_(argvs_local){
         return print(list_tasks);
     await shell_(Object.keys(list_tasks), num_task=> taskView_(list_tasks[num_task]));
 
-    async function shell_(options, task_){
-        const rl= createInterface();
-        const open_= getOpen();
+    async function shellMark_(rl, options, task_, open_){
+        const marked= new Set(data_marks[mark].tasks);
+        let { description, date }= data_marks[mark];
+        printMarkInfo({ description, date });
         while(true){
-            print(list_tasks);
-            const cmd= await questionCmd_(rl, [ "[q]uit", "[r]eload", "[v]iev", "[w]eb", "[c]ustom [f]ields", "[t]ag toggle", "[s]ection (project)" ]);
+            print(list_tasks, marked);
+            const cmd= await questionCmd_(rl, [ "[q]uit", "[r]eload", "[v]iev", "[w]eb", "[m]ark toggle", "[e]dit info", "[s]ave", "[D]elete" ]);
             if(!cmd) continue;
             try{
                 switch(cmd){
                     case "q": rl.close(); return 0;
                     case "r": rl.close(); return marks_(argvs);
+                    case "e": await editInfo_(); continue;
+                    case "m": await Promise.all((await questionChoose_(rl, options)).map(toggleMark)); continue;
+                    case "v": await Promise.all((await questionChoose_(rl, options)).map(task_)); continue;
+                    case "w": await questionChoose_(rl, options).then(openTaskWeb_); continue;
+                    case "D": save(true); return 0;
+                    case "s": save(); return marks_(argvs);
+                    default: throw new Error(`Unknown '${cmd}'`);
+                }
+            } catch(e){
+                console.error(e.message+" …exit with 'q'"); continue;
+            }
+        }
+        function save(remove){
+            const c= configRead();
+            if(remove) Reflect.deleteProperty(c.marks, mark);
+            else Reflect.set(c.marks, mark, { description, date, tasks: Array.from(marked) });
+            configWrite(c);
+            rl.close();
+        }
+        function toggleMark(id_mark){
+            const gid= list_tasks[id_mark].gid;
+            if(!gid) return;
+            if(marked.has(gid)) return marked.delete(gid);
+            return marked.add(gid);
+        }
+        async function editInfo_(){
+            description= await question_(rl, "Mark description", description);
+            date= await question_(rl, "Mark date", date);
+            printMarkInfo({ description, date });
+        }
+        function openTaskWeb_(tasks){ return Promise.all(tasks.map(n=> open_(list_tasks[n].permalink_url+"/f"))); }
+    }
+    async function shell_(options, task_){
+        const rl= createInterface();
+        const open_= getOpen();
+        printMarkInfo();
+        while(true){
+            print(list_tasks);
+            const cmd= await questionCmd_(rl, [ "[q]uit", "[r]eload", "[v]iev", "[w]eb", "[c]ustom [f]ields", "[t]ag toggle", "[s]ection (project)", "[m]anage mark" ]);
+            if(!cmd) continue;
+            try{
+                switch(cmd){
+                    case "q": rl.close(); return 0;
+                    case "r": rl.close(); return marks_(argvs);
+                    case "m": return shellMark_(rl, options, task_, open_);
                     case "v": await Promise.all((await questionChoose_(rl, options)).map(task_)); continue;
                     case "cf": await updateCF_(await questionChoose_(rl, options), rl); continue;
                     case "t": await updateTag_(await questionChoose_(rl, options), rl); continue;
@@ -690,6 +736,7 @@ async function marks_(argvs_local){
         }
         function openTaskWeb_(tasks){ return Promise.all(tasks.map(n=> open_(list_tasks[n].permalink_url+"/f"))); }
     }
+    function printMarkInfo({ description, date }= data_marks[mark]){ console.log("Description: "+description+"\nDate: "+date); }
     async function updateSection_(tasks, rl){
         //#region …
         const abbrevS= configRead().abbrevS;
@@ -746,15 +793,16 @@ async function marks_(argvs_local){
         })).catch(console.error);
         //#endregion …
     }
-    function print(list_tasks){
+    function print(list_tasks, marked){
         //#region …
+        const showMark= !marked ? ()=> "" : gid=> marked.has(gid) ? "*" : "";
         if(isTTY){
             console.log(`NUM\t${"GID".padEnd(list_tasks[list_tasks.length - 1].gid.length)}\tSUBTASKS\tUPDATED\t\tNAME`);
         }
         const pad_subtasks= "subtasks".length;
         console.log(list_tasks
             .map(({ gid, modified_at, num_subtasks= 0, name }, num)=>
-                `${num}\t${gid}\t${String(num_subtasks).padEnd(pad_subtasks)}\t${modified_at.split('T')[0]}\t${name}`
+                `${showMark(gid)}${num}\t${gid}\t${String(num_subtasks).padEnd(pad_subtasks)}\t${modified_at.split('T')[0]}\t${name}`
             ).join("\n"));
         //#endregion …
     }
@@ -788,10 +836,13 @@ async function tasks_(list_tasks, num_task, data_project, data_section, spinEnd)
     }
     async function shell_(options, task_){
         const rl= createInterface();
-        let name, description, marked= new Set();
+        let name, description, date, marked= new Set();
         const marks= configRead().marks;
+        print(marked);
+        console.log("\n*** Create/Edit mark ***");
         currentMarks();
         await editInfo_();
+        console.log(`\n*** Manage tasks for '${name}' ***`);
         print(marked);
         while(true){
             const cmd= await questionCmd_(rl, [
@@ -812,7 +863,7 @@ async function tasks_(list_tasks, num_task, data_project, data_section, spinEnd)
                     case "s":
                         const c= configRead();
                         if(cmd==="s"&&Reflect.has(c.marks, name)) c.marks[name].tasks.forEach(pipe(marked.add.bind(marked)));
-                        Reflect.set(c.marks, name, { description, tasks: Array.from(marked) });
+                        Reflect.set(c.marks, name, { description, date, tasks: Array.from(marked) });
                         configWrite(c);
                         rl.close();
                         return 0;
@@ -832,8 +883,14 @@ async function tasks_(list_tasks, num_task, data_project, data_section, spinEnd)
         }
         async function editInfo_(){
             name= await question_(rl, "Mark name");
-            if(Reflect.has(marks, name)) console.log("Mark with this name already exists!");
-            description= await question_(rl, "Mark description");
+            let description_default, date_default;
+            if(Reflect.has(marks, name)){
+                console.log("Mark with this name already exists!");
+                description_default= marks[name].description;
+                date_default= marks[name].date;
+            }
+            description= await question_(rl, "Mark description", description_default);
+            date= await question_(rl, "Mark date", date_default);
         }
     }
     //#endregion …
@@ -1019,7 +1076,7 @@ function createInterface(){
     return rl;
     //#endregion …
 }
-function question_(rl, q){ return new Promise(r=> rl.question(q+": ", r)); }
+function question_(rl, q, a){ return new Promise(r=> { rl.question(q+": ", r); if(a) rl.write(a); }); }
 async function questionChoose_(rl, options){
     //#region …
     const answers= await question_(rl, "choose from list");
