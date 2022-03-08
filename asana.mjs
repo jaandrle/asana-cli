@@ -598,18 +598,21 @@ async function list_(is_favorites){
     if("list"===num_workspace)
         return printList("Workspaces", list_workspaces);
     const data_workspace= list_workspaces[num_workspace];
+    if(!data_workspace) throw new Error("Workspace choosed unsuccessfully (e. g. use correct number indentificator =NUM)");
 
     const num_project= argvs.shift() ?? "list";
     const list_projects= await get_(is_favorites ? `users/me/favorites?workspace=${data_workspace.gid}&resource_type=project` : `workspaces/${data_workspace.gid}/projects`);
     if("list"===num_project)
         return printList(`Projects in '${data_workspace.name}'`, list_projects);
     const data_project= list_projects[num_project];
+    if(!data_project) throw new Error("Project choosed unsuccessfully (e. g. use correct number indentificator =NUM)");
 
     const num_section= argvs.shift() ?? "list";
     const list_sections= await get_(`projects/${data_project.gid}/sections`);
     if("list"===num_section)
         return printList(`Sections in '${data_workspace.name}' → '${data_project.name}'`, list_sections);
     const data_section= list_sections[num_section];
+    if(!data_section) throw new Error("Section choosed unsuccessfully (e. g. use correct number indentificator =NUM)");
 
     const num_task= argvs.shift() ?? "mark";
     const list_tasks= Object.entries(await get_(`sections/${data_section.gid}/tasks`, { cache: "no-cache", qs: { opt_fields: opt_fields_tasks } }));
@@ -815,6 +818,10 @@ async function tasks_(list_tasks, num_task, data_project, data_section, spinEnd)
         return console.log(isTTY ? list_tasks.map(v=> v[1]) : JSON.stringify(list_tasks.map(v=> v[1])));
     if("list"===num_task)
         return print();
+    if(!list_tasks.length){
+        if(!isTTY) return;
+        return console.log("No data");
+    }
     if("mark"===num_task&&isTTY)
         return await shell_(list_tasks.map(([num])=> num), num_task=> taskView_(list_tasks[num_task][1]));
     
@@ -823,6 +830,10 @@ async function tasks_(list_tasks, num_task, data_project, data_section, spinEnd)
 
     function print(marked= new Set()){
         //#region …
+        if(!list_tasks.length){
+            if(!isTTY) return;
+            return console.log("No data");
+        }
         if(isTTY){
             console.log(`Task todo in '${data_project.name}' → '${data_section.name}'`);
             console.log(`NUM\t${"GID".padEnd(list_tasks[list_tasks.length - 1][1].gid.length)}\tSUBTASKS\tUPDATED\t\tNAME`);
